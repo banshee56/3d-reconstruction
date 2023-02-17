@@ -4,7 +4,8 @@ Submission Functions
 """
 
 # import packages here
-
+import numpy as np
+import helper as hlp
 
 """
 Q3.1.1 Eight Point Algorithm
@@ -14,8 +15,40 @@ Q3.1.1 Eight Point Algorithm
        [O] F, the fundamental matrix (3x3 matrix)
 """
 def eight_point(pts1, pts2, M):
-    # replace pass by your implementation
-    pass
+    # normalize points
+    n = pts1.shape[0]
+
+    # scale coordinates by M
+    s = 1/M                         # scale factor
+    pts1 = s * pts1                 # normalizing coordinates
+    pts2 = s * pts2
+    T = np.array(  [[s, 0, 0],      # the transformation matrix
+                    [0, s, 0], 
+                    [0, 0, 1]])     
+    
+    # compute A
+    A = np.zeros(shape=(n, 9))
+    for p in range(n):
+        x0, y0 = pts1[p, 0], pts1[p, 1]
+        x1, y1 = pts2[p, 0], pts2[p, 1]
+        A[p] = [x0*x1, x0*y1, x0, y0*x1, y0*y1, y0, x1, y1, 1]
+
+    # commpute F
+    u, d, vt = np.linalg.svd(A)             # svd of A
+    f = vt[-1]                              # entries of F are the elements of column of V corresponding to the least singular value
+    F = np.reshape(f, newshape=(3, 3))      # compute F
+
+    # Enforce rank 2 constraint on F
+    U, D, Vt = np.linalg.svd(F)             # svd of F
+    D[-1] = 0                               # set third singular value to 0
+    F = np.dot(np.dot(U, np.diag(D)), Vt)   # recompute F
+
+    # refine the solution by using local minimization
+    F = hlp.refineF(F, pts1, pts2)
+
+    # unnormalize/unscale F
+    F_unnorm = np.dot(np.dot(T.T, F), T)
+    return F_unnorm
 
 
 """
@@ -27,8 +60,66 @@ Q3.1.2 Epipolar Correspondences
        [O] pts2, points in image 2 (Nx2 matrix)
 """
 def epipolar_correspondences(im1, im2, F, pts1):
-    # replace pass by your implementation
-    pass
+    # use fundamental matrix to estimate the corresponding epipolar line l'
+    pts1_homogenous = np.hstack((pts1, np.ones((pts1.shape[0], 1)))).T    # 3xN matrix of homogenous coordinates on im1
+    l2 = np.dot(F, pts1_homogenous)                                       # 3xN matrix of corresponding epipolar lines
+    pts2 = np.zeros_like(pts1)
+
+    w = 4       # window/patch 'radius'
+    # im1_p = np.pad(im1, pad_width=[(w, w),(w, w),(0, 0)], mode='constant')
+    # im2_p = np.pad(im1, pad_width=[(w, w),(w, w),(0, 0)], mode='constant')
+  
+    # for each point in im1, generate a set of candidate points in the second image
+    # x values shifted due to padding
+    x_cand = np.arange(0, im2.shape[1], 1)                  # x values in im2
+    x_cand = np.reshape(x_cand, (x_cand.shape[0], 1))       # Mx1
+
+    # go through each point in pts1, an Nx2 array
+    for i in range(pts1.shape[0]):
+        point = pts1[i]                                     # one point in pts1, shape 1x2
+        epipolar_correspondence = np.array([0, 0])          # the corresponding point of 'point'
+        correspondence_score = float('inf')                 # the score of epipolar_correspondence
+
+        # window in im1
+        # indices shifted by +w both ways due to padding
+        w1 = im1[int(point[1] - w): int(point[1] + w) + 1,  # 5x5 shape with 3 rgb channels
+                 int(point[0] - w): int(point[0] + w) + 1]
+
+        l = l2[:, i]                                        # corresponding line in im2
+
+        y_cand = (- l[0]*x_cand - l[2])/l[1]                # corresponding y val for each x val on line in im2, shifted due to padding
+        y_cand = np.reshape(y_cand, (y_cand.shape[0], 1))   # Mx1
+
+        cand = np.hstack((x_cand, y_cand))                  # Mx2
+        # go through each candidate point
+
+        for j in range(cand.shape[0]):
+            cand_point = cand[j]
+
+            # window in im2
+            # points are shifted by w due to padding
+            w2 = im2[int(cand_point[1] - w): int(cand_point[1] + w) + 1,   # 5x5 shape with 3 rgb channels
+                     int(cand_point[0] - w): int(cand_point[0] + w) + 1]
+
+            # what happens when we need padding?
+            # we keep x_cand and y_cand values the same, and ONLY pad by w when we are indexing into the padded image
+            # this way cand will have the correct coordinates?
+            
+            # compute similarity
+            score = np.sum((w1-w2)**2)
+
+            # if score is new max
+            if score < correspondence_score:
+                epipolar_correspondence[0] = cand_point[0] - 2
+                epipolar_correspondence[1] = cand_point[1] - 2
+                correspondence_score = score
+
+        # set up corresponding point in pts2
+        pts2[i] = np.reshape(epipolar_correspondence, (1, 2))
+        # for each candidate points x′, a similarity score between x and x′ is computed
+
+    # point with highest score is treated as epipolar correspondence
+    return pts2
 
 
 """
