@@ -10,7 +10,7 @@ datadir = '../data/'
 resultsdir = '.'
 im1 = cv.imread(datadir + 'im1.png')
 im2 = cv.imread(datadir + 'im2.png')
-data = np.load("../data/some_corresp.npz") 
+data = np.load(datadir + "some_corresp.npz") 
 pts1 = data['pts1']
 pts2 = data['pts2']
 
@@ -22,24 +22,56 @@ F = sub.eight_point(pts1, pts2, M)
 # hlp.displayEpipolarF(im1, im2, F)
 
 # 3. Load points in image 1 from data/temple_coords.npz
-data = np.load("../data/temple_coords.npz") 
-pts11 = data['pts1']
+data = np.load(datadir + "temple_coords.npz") 
+pts1 = data['pts1']
 
 # 4. Run epipolar_correspondences to get points in image 2
-pts22 = sub.epipolar_correspondences(im1, im2, F, pts11)
-T = sub.eight_point(pts11, pts22, M)
-print(T)
+pts2 = sub.epipolar_correspondences(im1, im2, F, pts1)
 
 ###### to visualize results ######
-hlp.epipolarMatchGUI(im1, im2, T)
+# hlp.epipolarMatchGUI(im1, im2, F)
 
 # 5. Compute the camera projection matrix P1
+# get intrinsic matrices
+intrinsics = np.load(datadir + "intrinsics.npz")
+K1 = intrinsics['K1']
+K2 = intrinsics['K2']
+
+# compute essential matrix
+E = sub.essential_matrix(F, K1, K2)
 
 # 6. Use camera2 to get 4 camera projection matrices P2
+# compute P1 using P = K * R * [I|-C]
+P1 = np.hstack((K1, np.zeros((3, 1))))    # P1 = K1 * [I|0]
+extrinsics = hlp.camera2(E)
+P2_0 = np.dot(K2, extrinsics[:, :, 0])
+P2_1 = np.dot(K2, extrinsics[:, :, 1])
+P2_2 = np.dot(K2, extrinsics[:, :, 2])
+P2_3 = np.dot(K2, extrinsics[:, :, 3])
 
 # 7. Run triangulate using the projection matrices
+# use computed pts2
+pts3d_0 = sub.triangulate(P1, pts1, P2_0, pts2)
+pts3d_1 = sub.triangulate(P1, pts1, P2_1, pts2)
+pts3d_2 = sub.triangulate(P1, pts1, P2_2, pts2)
+pts3d_3 = sub.triangulate(P1, pts1, P2_3, pts2)
 
 # 8. Figure out the correct P2
+P2 = None           # correct P2
+maxValidPts = 0     # number of valid points in correct P2
+
+P2s = [P2_0, P2_1, P2_2, P2_3]
+pts3ds = [pts3d_0, pts3d_1, pts3d_2, pts3d_3]
+for p in range(len(P2s)):
+    pts3d = pts3ds[p]
+
+    a = pts3d[:, 2]             # get column of Z values
+    validPts = len(a[a>0])      # count # of positive Z values
+
+    # comapre number of valid points to max
+    if validPts > maxValidPts:
+        maxValidPts = validPts  # update max count
+        P2 = P2s[p]             # update correct P2
 
 # 9. Scatter plot the correct 3D points
 

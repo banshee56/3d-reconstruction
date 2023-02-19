@@ -65,10 +65,10 @@ def epipolar_correspondences(im1, im2, F, pts1):
     l2 = np.dot(F, pts1_homogenous)                                       # 3xN matrix of corresponding epipolar lines
     pts2 = np.zeros_like(pts1)
 
-    w = 4       # window/patch 'radius'
-    # im1_p = np.pad(im1, pad_width=[(w, w),(w, w),(0, 0)], mode='constant')
-    # im2_p = np.pad(im1, pad_width=[(w, w),(w, w),(0, 0)], mode='constant')
-  
+    w = 50       # window/patch 'radius'
+    im1_p = np.pad(im1, pad_width=[(w, w),(w, w),(0, 0)], mode='constant')
+    im2_p = np.pad(im1, pad_width=[(w, w),(w, w),(0, 0)], mode='constant')
+
     # for each point in im1, generate a set of candidate points in the second image
     # x values shifted due to padding
     x_cand = np.arange(0, im2.shape[1], 1)                  # x values in im2
@@ -82,41 +82,36 @@ def epipolar_correspondences(im1, im2, F, pts1):
 
         # window in im1
         # indices shifted by +w both ways due to padding
-        w1 = im1[int(point[1] - w): int(point[1] + w) + 1,  # 5x5 shape with 3 rgb channels
-                 int(point[0] - w): int(point[0] + w) + 1]
+        w1 = im1_p[int(point[1]): int(point[1] + 2*w) + 1,  # 5x5 shape with 3 rgb channels
+                   int(point[0]): int(point[0] + 2*w) + 1]
 
         l = l2[:, i]                                        # corresponding line in im2
 
         y_cand = (- l[0]*x_cand - l[2])/l[1]                # corresponding y val for each x val on line in im2, shifted due to padding
         y_cand = np.reshape(y_cand, (y_cand.shape[0], 1))   # Mx1
-
         cand = np.hstack((x_cand, y_cand))                  # Mx2
-        # go through each candidate point
 
+        # go through each candidate point
         for j in range(cand.shape[0]):
             cand_point = cand[j]
 
             # window in im2
             # points are shifted by w due to padding
-            w2 = im2[int(cand_point[1] - w): int(cand_point[1] + w) + 1,   # 5x5 shape with 3 rgb channels
-                     int(cand_point[0] - w): int(cand_point[0] + w) + 1]
-
-            # what happens when we need padding?
-            # we keep x_cand and y_cand values the same, and ONLY pad by w when we are indexing into the padded image
-            # this way cand will have the correct coordinates?
-            
+            w2 = im2_p[int(cand_point[1]): int(cand_point[1] + 2*w) + 1,   # 5x5 shape with 3 rgb channels
+                       int(cand_point[0]): int(cand_point[0] + 2*w) + 1]
+ 
             # compute similarity
+            # get the distance between the points
             score = np.sum((w1-w2)**2)
 
             # if score is new max
             if score < correspondence_score:
-                epipolar_correspondence[0] = cand_point[0] - 2
-                epipolar_correspondence[1] = cand_point[1] - 2
+                epipolar_correspondence[0] = cand_point[0]
+                epipolar_correspondence[1] = cand_point[1]
                 correspondence_score = score
 
         # set up corresponding point in pts2
         pts2[i] = np.reshape(epipolar_correspondence, (1, 2))
-        # for each candidate points x′, a similarity score between x and x′ is computed
 
     # point with highest score is treated as epipolar correspondence
     return pts2
@@ -130,8 +125,10 @@ Q3.1.3 Essential Matrix
        [O] E, the essential matrix (3x3 matrix)
 """
 def essential_matrix(F, K1, K2):
-    # replace pass by your implementation
-    pass
+    # F = K2^(-T) * E * K1^(-1)
+    # E = K2^(T) * E * K1
+    E = np.dot(np.dot(K2.T, F), K1)
+    return E
 
 
 """
@@ -143,8 +140,38 @@ Q3.1.4 Triangulation
        [O] pts3d, 3D points in space (Nx3 matrix)
 """
 def triangulate(P1, pts1, P2, pts2):
-    # replace pass by your implementation
-    pass
+    pts3d = np.zeros((pts1.shape[0], 3))
+    # print(pts1.shape)
+
+    for p in range(pts1.shape[0]):
+        # camera 1 variables
+        x1 = pts1[p][0]
+        y1 = pts1[p][1]
+        p1_1 = P1[0].reshape(1,4)
+        p1_2 = P1[1].reshape(1,4)
+        p1_3 = P1[2].reshape(1,4)
+
+        # camera 2 variables
+        x2 = pts2[p][0]
+        y2 = pts2[p][1]
+        p2_1 = P2[0].reshape(1,4)
+        p2_2 = P2[1].reshape(1,4)
+        p2_3 = P2[2].reshape(1,4)
+
+        # compute A
+        A = np.array([y1 * p1_3 - p1_2,
+                      p1_1 - x1 * p1_3,
+                      y2 * p2_3 - p2_2,
+                      p2_1 - x2 * p2_3]).reshape((4, 4))
+
+        # compute SVD of A
+        U, D, Vt = np.linalg.svd(A)
+        X = Vt[-1]      # ROW of Vt corresponding to smallest singular value
+        X = X/X[-1]
+        pts3d[p] = X[0:3].reshape((1, 3))
+
+    # print(pts3d.shape)
+    return pts3d
 
 
 """
