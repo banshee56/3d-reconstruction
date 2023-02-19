@@ -65,7 +65,7 @@ def epipolar_correspondences(im1, im2, F, pts1):
     l2 = np.dot(F, pts1_homogenous)                                       # 3xN matrix of corresponding epipolar lines
     pts2 = np.zeros_like(pts1)
 
-    w = 10       # window/patch 'radius'
+    w = 7       # window/patch 'radius', padding width
     im1_p = np.pad(im1, pad_width=[(w, w),(w, w),(0, 0)], mode='constant')
     im2_p = np.pad(im2, pad_width=[(w, w),(w, w),(0, 0)], mode='constant')
 
@@ -82,7 +82,7 @@ def epipolar_correspondences(im1, im2, F, pts1):
 
         # window in im1
         # indices shifted by +w both ways due to padding
-        w1 = im1_p[int(point[1]): int(point[1] + 2*w) + 1,     # wxw window with 3 rgb channels
+        w1 = im1_p[int(point[1]): int(point[1] + 2*w) + 1,  # (2w+1)x(2w+1) window with 3 rgb channels
                 int(point[0]): int(point[0] + 2*w) + 1, :]
 
         l = l2[:, i]                                        # corresponding line in im2
@@ -97,11 +97,15 @@ def epipolar_correspondences(im1, im2, F, pts1):
 
             # window in im2
             # points are shifted by w due to padding
-            w2 = im2_p[int(cand_point[1]): int(cand_point[1] + 2*w) + 1,     # wxw window with 3 rgb channels
-                int(cand_point[0]): int(cand_point[0] + 2*w) + 1, :]
- 
+            w2 = im2_p[int(cand_point[1]): int(cand_point[1] + 2*w) + 1,    # (2w+1)x(2w+1) window with 3 rgb channels
+                    int(cand_point[0]): int(cand_point[0] + 2*w) + 1, :]
+            
+            # ignore patches that don't align
+            if w2.shape != w1.shape:
+                continue
+
             # compute similarity
-            # get the distance between the points
+            # get the manhattan distance between the points
             score = np.sum((w1-w2)**2)
 
             # if score is new max
