@@ -65,9 +65,9 @@ def epipolar_correspondences(im1, im2, F, pts1):
     l2 = np.dot(F, pts1_homogenous)                                       # 3xN matrix of corresponding epipolar lines
     pts2 = np.zeros_like(pts1)
 
-    w = 50       # window/patch 'radius'
+    w = 10       # window/patch 'radius'
     im1_p = np.pad(im1, pad_width=[(w, w),(w, w),(0, 0)], mode='constant')
-    im2_p = np.pad(im1, pad_width=[(w, w),(w, w),(0, 0)], mode='constant')
+    im2_p = np.pad(im2, pad_width=[(w, w),(w, w),(0, 0)], mode='constant')
 
     # for each point in im1, generate a set of candidate points in the second image
     # x values shifted due to padding
@@ -77,16 +77,14 @@ def epipolar_correspondences(im1, im2, F, pts1):
     # go through each point in pts1, an Nx2 array
     for i in range(pts1.shape[0]):
         point = pts1[i]                                     # one point in pts1, shape 1x2
-        print(point)
         epipolar_correspondence = np.array([0, 0])          # the corresponding point of 'point'
         correspondence_score = float('inf')                 # the score of epipolar_correspondence
 
         # window in im1
         # indices shifted by +w both ways due to padding
-        w1 = im1_p[int(point[1]): int(point[1] + 2*w) + 1,  # 5x5 shape with 3 rgb channels
-                   int(point[0]): int(point[0] + 2*w) + 1]
+        w1 = im1_p[int(point[1]): int(point[1] + 2*w) + 1,     # wxw window with 3 rgb channels
+                int(point[0]): int(point[0] + 2*w) + 1, :]
 
-        print(w1)
         l = l2[:, i]                                        # corresponding line in im2
 
         y_cand = (- l[0]*x_cand - l[2])/l[1]                # corresponding y val for each x val on line in im2, shifted due to padding
@@ -99,8 +97,8 @@ def epipolar_correspondences(im1, im2, F, pts1):
 
             # window in im2
             # points are shifted by w due to padding
-            w2 = im2_p[int(cand_point[1]): int(cand_point[1] + 2*w) + 1,   # 5x5 shape with 3 rgb channels
-                       int(cand_point[0]): int(cand_point[0] + 2*w) + 1]
+            w2 = im2_p[int(cand_point[1]): int(cand_point[1] + 2*w) + 1,     # wxw window with 3 rgb channels
+                int(cand_point[0]): int(cand_point[0] + 2*w) + 1, :]
  
             # compute similarity
             # get the distance between the points
@@ -111,7 +109,7 @@ def epipolar_correspondences(im1, im2, F, pts1):
                 epipolar_correspondence[0] = cand_point[0]
                 epipolar_correspondence[1] = cand_point[1]
                 correspondence_score = score
-        print(correspondence_score)
+
         # set up corresponding point in pts2
         pts2[i] = np.reshape(epipolar_correspondence, (1, 2))
 

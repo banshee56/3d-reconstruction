@@ -7,7 +7,7 @@ im1 = np.random.randint(0, 5, (3, 5, 5))
 print(im1)
 im1_p = np.pad(im1, pad_width=[(0, 0),(w, w),(w, w)], mode='constant')
 print(im1_p)
-point = [2,2]
+point = [0,2]
 
 # print(im1_p[:, 1:4, 1:4])
 
@@ -16,6 +16,7 @@ w1 = im1_p[:,
         int(point[0]): int(point[0] + 2*w) + 1]
 print('window:')
 print(w1)
+print(w1.shape)
 
 
 
