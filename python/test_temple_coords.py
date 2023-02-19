@@ -26,10 +26,10 @@ data = np.load(datadir + "temple_coords.npz")
 pts1 = data['pts1']
 
 # 4. Run epipolar_correspondences to get points in image 2
-# pts2 = sub.epipolar_correspondences(im1, im2, F, pts1)
+pts2 = sub.epipolar_correspondences(im1, im2, F, pts1)
 
 ###### to visualize results ######
-hlp.epipolarMatchGUI(im1, im2, F)
+# hlp.epipolarMatcshGUI(im1, im2, F)
 
 # 5. Compute the camera projection matrix P1
 # get intrinsic matrices
@@ -58,20 +58,36 @@ pts3d_3 = sub.triangulate(P1, pts1, P2_3, pts2)
 
 # 8. Figure out the correct P2
 P2 = None           # correct P2
-maxValidPts = 0     # number of valid points in correct P2
+maxValidPts = 0     # number of valid points in correct P2      
+pts3d = None        # correct 3d points
 
 P2s = [P2_0, P2_1, P2_2, P2_3]
 pts3ds = [pts3d_0, pts3d_1, pts3d_2, pts3d_3]
 for p in range(len(P2s)):
-    pts3d = pts3ds[p]
-
-    a = pts3d[:, 2]             # get column of Z values
+    a = pts3ds[p][:, 2]         # get column of Z values
     validPts = len(a[a>0])      # count # of positive Z values
 
     # comapre number of valid points to max
     if validPts > maxValidPts:
         maxValidPts = validPts  # update max count
         P2 = P2s[p]             # update correct P2
+        pts3d = pts3ds[p]       # the correct 3d points
+
+### calculate reprojection error
+# get heterogenous reprojected points
+pts3d_homogenous = np.hstack((pts3d, np.ones((pts3d.shape[0], 1)))).T   # 4xN matrix of homogenous coordinates on im1 
+reprojected_pts1 = np.dot(P1, pts3d_homogenous).T                       # Nx3 homogenous pts1
+reprojected_pts1 = reprojected_pts1/reprojected_pts1[:, -1].reshape((reprojected_pts1.shape[0], 1)) # turning 'z' value of each homogenous coordinate into 1
+reprojected_pts1 = reprojected_pts1[:, 0:2]                             # turning into heterogenous coordinate, Nx2
+reprojected_pts1 = (reprojected_pts1).astype(int)                       # turning to pixel coordinate
+
+# calculate the error
+eucliean_dist = np.linalg.norm(reprojected_pts1 - pts1, axis=1)
+reprojection_error = np.mean(eucliean_dist)
+print(reprojection_error)
+
+
+# calculate mean Eucliean error between points
 
 # 9. Scatter plot the correct 3D points
 
