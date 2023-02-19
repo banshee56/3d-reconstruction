@@ -77,6 +77,7 @@ def epipolar_correspondences(im1, im2, F, pts1):
     # go through each point in pts1, an Nx2 array
     for i in range(pts1.shape[0]):
         point = pts1[i]                                     # one point in pts1, shape 1x2
+        print(point)
         epipolar_correspondence = np.array([0, 0])          # the corresponding point of 'point'
         correspondence_score = float('inf')                 # the score of epipolar_correspondence
 
@@ -85,6 +86,7 @@ def epipolar_correspondences(im1, im2, F, pts1):
         w1 = im1_p[int(point[1]): int(point[1] + 2*w) + 1,  # 5x5 shape with 3 rgb channels
                    int(point[0]): int(point[0] + 2*w) + 1]
 
+        print(w1)
         l = l2[:, i]                                        # corresponding line in im2
 
         y_cand = (- l[0]*x_cand - l[2])/l[1]                # corresponding y val for each x val on line in im2, shifted due to padding
@@ -109,7 +111,7 @@ def epipolar_correspondences(im1, im2, F, pts1):
                 epipolar_correspondence[0] = cand_point[0]
                 epipolar_correspondence[1] = cand_point[1]
                 correspondence_score = score
-
+        print(correspondence_score)
         # set up corresponding point in pts2
         pts2[i] = np.reshape(epipolar_correspondence, (1, 2))
 

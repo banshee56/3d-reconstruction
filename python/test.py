@@ -2,16 +2,22 @@ import numpy as np
 from submission import eight_point
 import cv2
 
-im1 = np.random.randint(0, 5, (8, 8))
-print(im1)
-print('-----------')
 w = 2
-for i in range(im1.shape[1]):
-        x = im1[:, i]    # one point in im1                   3x1 point
-        w1 = im1[max(0, x[1] - w): min(im1.shape[1], x[1] + w) + 1, 
-                 max(0, x[0] - w): min(im1.shape[0], x[0] + w) + 1]
-        print(w1)
-        print('-----------')
+im1 = np.random.randint(0, 5, (3, 5, 5))
+print(im1)
+im1_p = np.pad(im1, pad_width=[(0, 0),(w, w),(w, w)], mode='constant')
+print(im1_p)
+point = [2,2]
+
+# print(im1_p[:, 1:4, 1:4])
+
+w1 = im1_p[:,
+        int(point[1]): int(point[1] + 2*w) + 1,  # 3x3 shape with 3 rgb channels
+        int(point[0]): int(point[0] + 2*w) + 1]
+print('window:')
+print(w1)
+
+
 
 # a = np.array([[2, 7],
 #             [2, 3],
