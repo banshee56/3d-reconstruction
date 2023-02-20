@@ -29,7 +29,7 @@ pts1 = data['pts1']
 pts2 = sub.epipolar_correspondences(im1, im2, F, pts1)
 
 ###### to visualize results ######
-# hlp.epipolarMatchGUI(im1, im2, F)
+hlp.epipolarMatchGUI(im1, im2, F)
 
 # 5. Compute the camera projection matrix P1
 # get intrinsic matrices

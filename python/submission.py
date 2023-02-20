@@ -105,13 +105,18 @@ def epipolar_correspondences(im1, im2, F, pts1):
             #     continue
 
             # compute similarity
-            # use sum of absolute differences between the points as loss function
+            # SSD loss function, gives flat reconstruction
+            # score = np.sum((w1-w2)**2)
+
+            # euclidean loss function
+            # score = np.linalg.norm(w1-w2)
+
+            # SSD/manhattan loss function 
             score = np.sum(np.absolute(w1-w2))
 
             # if score is new max
             if score < correspondence_score:
-                epipolar_correspondence[0] = cand_point[0]
-                epipolar_correspondence[1] = cand_point[1]
+                epipolar_correspondence = cand_point
                 correspondence_score = score
 
         # set up corresponding point in pts2
@@ -224,6 +229,7 @@ Q3.2.2 Disparity Map
 """
 def get_disparity(im1, im2, max_disp, win_size):
     # replace pass by your implementation
+
     pass
 
 
@@ -236,9 +242,24 @@ Q3.2.3 Depth Map
        [O] depthM, depth map (H1xW1 matrix)
 """
 def get_depth(dispM, K1, K2, R1, R2, t1, t2):
-    # replace pass by your implementation
-    pass
+    # compute camera centers
+    c1 = - np.dot(np.linalg.inv(R1), t1)
+    c2 = - np.dot(np.linalg.inv(R2), t2)
 
+    b = np.linalg.norm(c1 - c2)
+    f = K1[0, 0]                # K1[1, 1]
+
+    depthM = np.zeros_like(dispM)
+
+    for y in range(dispM.shape[0]):
+        for x in range(dispM.shape[1]):
+            if dispM[y, x] == 0:
+                depthM[y, x] = 0
+            else:
+                depthM[y, x] = b * (f / dispM[y, x])
+    
+    return depthM
+    
 
 """
 Q3.3.1 Camera Matrix Estimation
