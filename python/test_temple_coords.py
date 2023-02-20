@@ -87,16 +87,25 @@ reprojected_pts1 = reprojected_pts1/reprojected_pts1[:, -1].reshape((reprojected
 reprojected_pts1 = reprojected_pts1[:, 0:2]                             # turning into heterogenous coordinate, Nx2
 reprojected_pts1 = reprojected_pts1.astype(int)                         # turning to pixel coordinate
 
+
+fp = open('repro.txt', 'w')
+fp.write(str(reprojected_pts1))
+fp.close()
+
+fp = open('repro1.txt', 'w')
+fp.write(str(pts1))
+fp.close()
+
 # calculate the mean euclidean error
 # print(np.linalg.norm(reprojected_pts1 - pts1, axis=1))
 reprojection_error = np.mean(np.linalg.norm(reprojected_pts1 - pts1, axis=1))
 print("Reprojection Error: " + str(reprojection_error))
 
 # 9. Scatter plot the correct 3D points
-# ax = plt.axes(projection ="3d")
-# ax.scatter(pts3d[:, 0], pts3d[:, 1], pts3d[:, 2])
-# plt.title("3D Reconstruction")
-# plt.show()
+ax = plt.axes(projection ="3d")
+ax.scatter(pts3d[:, 0], pts3d[:, 1], pts3d[:, 2])
+plt.title("3D Reconstruction")
+plt.show()
 
 # 10. Save the computed extrinsic parameters (R1,R2,t1,t2) to data/extrinsics.npz
 R1 = np.array([1, 0, 0, 0, 1, 0, 0, 0, 1]).reshape(3, 3)

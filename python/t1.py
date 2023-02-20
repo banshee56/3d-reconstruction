@@ -4,17 +4,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-# Creating dataset
-z = np.random.randint(100, size =(50))
-x = np.random.randint(80, size =(50))
-y = np.random.randint(60, size =(50))
+a = np.random.randint(0, 5, (3, 4, 3))
+b = np.random.randint(0, 5, (3, 4, 3))
 
-# Creating figure
-ax = plt.axes(projection ="3d")
-print(x.shape)
-# Creating plot
-ax.scatter3D(x, y, z, color = "green")
-plt.title("simple 3D scatter plot")
-
-# show plot
-plt.show()
+print(a)
+print(b)
+c = np.absolute(a-b)
+print(c)
+print(np.sum(c))

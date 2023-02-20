@@ -105,8 +105,8 @@ def epipolar_correspondences(im1, im2, F, pts1):
             #     continue
 
             # compute similarity
-            # get the manhattan distance between the points
-            score = np.sum((w1-w2)**2)
+            # use sum of absolute differences between the points as loss function
+            score = np.sum(np.absolute(w1-w2))
 
             # if score is new max
             if score < correspondence_score:
