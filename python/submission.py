@@ -188,9 +188,31 @@ Q3.2.1 Image Rectification
            t1p t2p, rectified translation vectors (3x1 matrix)
 """
 def rectify_pair(K1, K2, R1, R2, t1, t2):
-    # replace pass by your implementation
-    pass
+    # compute camera centers
+    c1 = - np.dot(np.linalg.inv(R1), t1)
+    c2 = - np.dot(np.linalg.inv(R2), t2)
 
+    # compute new rotation matrix, R_tilda
+    v = c1 - c2
+    r1 = v / np.linalg.norm(v)
+    r2 = np.cross(r1.T, R1[2, :].reshape(1, 3)).T
+    r3 = np.cross(r2.T, r1.T).T
+    R_tilda = np.hstack((r1, r2, r3)).T
+
+    R1p, R2p = R_tilda, R_tilda
+
+    # new intrinsic matrices
+    K1p, K2p = K2, K2
+
+    # compute new translation matrices
+    t1p = -np.dot(R_tilda, c1)
+    t2p = -np.dot(R_tilda, c2)
+
+    # compute rectification matrices of the cameras
+    M1 = np.dot(np.dot(K1p, R1p), np.linalg.inv(np.dot(K1, R1)))
+    M2 = np.dot(np.dot(K2p, R2p), np.linalg.inv(np.dot(K2, R2)))
+
+    return M1, M2, K1p, K2p, R1p, R2p, t1p, t2p
 
 """
 Q3.2.2 Disparity Map
