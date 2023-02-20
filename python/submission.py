@@ -6,6 +6,7 @@ Submission Functions
 # import packages here
 import numpy as np
 import helper as hlp
+import scipy.signal as sig
 
 """
 Q3.1.1 Eight Point Algorithm
@@ -223,6 +224,7 @@ def rectify_pair(K1, K2, R1, R2, t1, t2):
 def dist(im1, im2, x, y, d, w):
     # can be computed using scipy
     sum = 0         # dist value
+   
 
     for i in range(-w, w + 1):
         for j in range(-w, w + 1):
@@ -240,19 +242,46 @@ Q3.2.2 Disparity Map
 """
 def get_disparity(im1, im2, max_disp, win_size):
     # replace pass by your implementation
-    dispVal = np.full(im1.shape, float('inf'))      # array of minimum distances at (x, y)
     dispM = np.zeros_like(im1)
     w = int((win_size - 1)/2)
 
-    for y in range(im1.shape[0]):
-        print(y)
-        for x in range(im1.shape[1]):
-            for d in range(max_disp + 1):
-                val = dist(im1, im2, x, y, d, w)    # compute the distance
+    # pad the images for convolution
+    im1_pad = np.pad(im1, pad_width=[(w, w),(w, w)], mode='constant')
+    im2_pad = np.pad(im2, pad_width=[(w, w),(w, w)], mode='constant')
 
-                if val < dispVal[y, x]:             # if calculated value is smaller than current niminum distance
-                    dispVal[y, x] = val             # update dispVal
-                    dispM[y, x] = d                 # set dispM(y, x) to d
+    mask = np.ones((2*w + 1, 2*w + 1))
+
+    for y in range(im1.shape[0]):
+        for x in range(im1.shape[1]):
+            minDist = float('inf')
+            minD = 0
+            im1_w = im1[y-w: y+w+1, x-w: x+w+1]                             # create window in im1
+            # im1_w = im1_pad[y-w + w: y+w+1 + w, x-w + w: x+w+1 + w]       # shifted by w due to padding by w
+
+
+            # go through d values to find d that produces minimum dist
+            for d in range(max_disp + 1):
+                # create window in im2
+                im2_w = im2[y-w: y+w+1, (x-d)-w: (x-d)+w+1]
+                # im2_w = im2_pad[y-w + w: y+w+1 + w, (x-d)-w + w: (x-d)+w+1 + w]
+                
+                # if windows have the same size, compute distance as normal
+                if im1_w.shape == im2_w.shape:
+                    squared_diff = (im1_w - im2_w)**2
+                    # scipy.signal.convolve2d
+                    dist = sig.convolve2d(squared_diff, mask, mode='valid')     # compute the distance
+                # if windows do not have the same size
+                else:
+                    # (x, y) is at the border of the image where image is black
+                    dist = [[0]]
+                    
+                # if calculated value is smaller than current niminum distance
+                if dist[0][0] < minDist:
+                    minDist = int(dist[0][0])
+                    minD = d
+            
+            # # set dispM(y, x) to d at which minimum dist found
+            dispM[y, x] = minD
 
     return dispM
 
