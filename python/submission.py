@@ -7,7 +7,7 @@ Submission Functions
 import numpy as np
 import helper as hlp
 import scipy.signal as sig
-
+import cv2 as cv
 """
 Q3.1.1 Eight Point Algorithm
        [I] pts1, points in image 1 (Nx2 matrix)
@@ -62,16 +62,19 @@ Q3.1.2 Epipolar Correspondences
 """
 def epipolar_correspondences(im1, im2, F, pts1):
     # use fundamental matrix to estimate the corresponding epipolar line l'
-    pts1_homogenous = np.hstack((pts1, np.ones((pts1.shape[0], 1)))).T    # 3xN matrix of homogenous coordinates on im1
-    l2 = np.dot(F, pts1_homogenous)                                       # 3xN matrix of corresponding epipolar lines
+    pts1_homogenous = np.hstack((pts1, np.ones((pts1.shape[0], 1)))).T      # 3xN matrix of homogenous coordinates on im1
+    l2 = np.dot(F, pts1_homogenous)                                         # 3xN matrix of corresponding epipolar lines
     pts2 = np.zeros_like(pts1)
 
     w = 5      # window/patch 'radius', padding width
-    im1_p = np.pad(im1, pad_width=[(w, w),(w, w),(0, 0)], mode='constant')
-    im2_p = np.pad(im2, pad_width=[(w, w),(w, w),(0, 0)], mode='constant')
+
+    # process the images
+    im1_p = cv.cvtColor(im1, cv.COLOR_BGR2GRAY).astype(np.float32)          # turn image into grayscale
+    im2_p = cv.cvtColor(im2, cv.COLOR_BGR2GRAY).astype(np.float32)
+    im1_p = np.pad(im1_p, pad_width=[(w, w),(w, w)], mode='constant')
+    im2_p = np.pad(im2_p, pad_width=[(w, w),(w, w)], mode='constant')
 
     # for each point in im1, generate a set of candidate points in the second image
-    # x values shifted due to padding
     x_cand = np.arange(0, im2.shape[1], 1)                  # x values in im2
     x_cand = np.reshape(x_cand, (x_cand.shape[0], 1))       # Mx1
 
@@ -81,14 +84,13 @@ def epipolar_correspondences(im1, im2, F, pts1):
         epipolar_correspondence = np.array([0, 0])          # the corresponding point of 'point'
         correspondence_score = float('inf')                 # the score of epipolar_correspondence
 
-        # window in im1
-        # indices shifted by +w both ways due to padding
-        w1 = im1_p[int(point[1]): int(point[1] + 2*w) + 1,  # (2w+1)x(2w+1) window with 3 rgb channels
-                int(point[0]): int(point[0] + 2*w) + 1, :]
+        # window in im1, indices shifted by +w both ways due to padding
+        w1 = im1_p[ int(point[1]): int(point[1] + 2*w) + 1, # (2w+1)x(2w+1) window
+                    int(point[0]): int(point[0] + 2*w) + 1]
 
         l = l2[:, i]                                        # corresponding line in im2
 
-        y_cand = (- l[0]*x_cand - l[2])/l[1]                # corresponding y val for each x val on line in im2, shifted due to padding
+        y_cand = (- l[0]*x_cand - l[2])/l[1]                # corresponding y val for each x val on line in im2
         y_cand = np.reshape(y_cand, (y_cand.shape[0], 1))   # Mx1
         cand = np.hstack((x_cand, y_cand))                  # Mx2
 
@@ -97,15 +99,10 @@ def epipolar_correspondences(im1, im2, F, pts1):
             cand_point = cand[j]
 
             # window in im2
-            # points are shifted by w due to padding
-            w2 = im2_p[int(cand_point[1]): int(cand_point[1] + 2*w) + 1,    # (2w+1)x(2w+1) window with 3 rgb channels
-                    int(cand_point[0]): int(cand_point[0] + 2*w) + 1, :]
-            
-            # # ignore patches that don't align
-            # if w2.shape != w1.shape:
-            #     continue
+            w2 = im2_p[int(cand_point[1]): int(cand_point[1] + 2*w) + 1,    # (2w+1)x(2w+1) window
+                    int(cand_point[0]): int(cand_point[0] + 2*w) + 1]
 
-            # compute similarity
+            ### compute similarity
             # SSD loss function, gives flat reconstruction
             # score = np.sum((w1-w2)**2)
 

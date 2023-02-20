@@ -29,7 +29,7 @@ pts1 = data['pts1']
 pts2 = sub.epipolar_correspondences(im1, im2, F, pts1)
 
 ###### to visualize results ######
-hlp.epipolarMatchGUI(im1, im2, F)
+# hlp.epipolarMatchGUI(im1, im2, F)
 
 # 5. Compute the camera projection matrix P1
 # get intrinsic matrices
@@ -75,9 +75,9 @@ for p in range(len(P2s)):
         maxValidPts = validPts  # update max count
         index = p               # the index containing the correct P2
 
-P2 = P2s[index]             # update correct P2
-pts3d = pts3ds[index]       # the correct 3d points
-ex2 = ex[index]             # the corresponding extrinsic matrix
+P2 = P2s[index]                 # update correct P2
+pts3d = pts3ds[index]           # the correct 3d points
+ex2 = ex[index]                 # the corresponding extrinsic matrix
 
 ### calculate reprojection error
 # get heterogenous reprojected points
@@ -86,15 +86,6 @@ reprojected_pts1 = np.dot(P1, pts3d_homogenous).T                       # Nx3 ho
 reprojected_pts1 = reprojected_pts1/reprojected_pts1[:, -1].reshape((reprojected_pts1.shape[0], 1)) # turning 'z' value of each homogenous coordinate into 1
 reprojected_pts1 = reprojected_pts1[:, 0:2]                             # turning into heterogenous coordinate, Nx2
 reprojected_pts1 = reprojected_pts1.astype(int)                         # turning to pixel coordinate
-
-
-fp = open('repro.txt', 'w')
-fp.write(str(reprojected_pts1))
-fp.close()
-
-fp = open('repro1.txt', 'w')
-fp.write(str(pts1))
-fp.close()
 
 # calculate the mean euclidean error
 # print(np.linalg.norm(reprojected_pts1 - pts1, axis=1))
