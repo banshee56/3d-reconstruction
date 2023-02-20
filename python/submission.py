@@ -219,6 +219,17 @@ def rectify_pair(K1, K2, R1, R2, t1, t2):
 
     return M1, M2, K1p, K2p, R1p, R2p, t1p, t2p
 
+
+def dist(im1, im2, x, y, d, w):
+    # can be computed using scipy
+    sum = 0         # dist value
+
+    for i in range(-w, w + 1):
+        for j in range(-w, w + 1):
+            sum += (im1[y + i, x + j] - im2[y + i, x + j - d])**2
+
+    return sum
+
 """
 Q3.2.2 Disparity Map
        [I] im1, image 1 (H1xW1 matrix)
@@ -229,8 +240,21 @@ Q3.2.2 Disparity Map
 """
 def get_disparity(im1, im2, max_disp, win_size):
     # replace pass by your implementation
+    dispVal = np.full(im1.shape, float('inf'))      # array of minimum distances at (x, y)
+    dispM = np.zeros_like(im1)
+    w = int((win_size - 1)/2)
 
-    pass
+    for y in range(im1.shape[0]):
+        print(y)
+        for x in range(im1.shape[1]):
+            for d in range(max_disp + 1):
+                val = dist(im1, im2, x, y, d, w)    # compute the distance
+
+                if val < dispVal[y, x]:             # if calculated value is smaller than current niminum distance
+                    dispVal[y, x] = val             # update dispVal
+                    dispM[y, x] = d                 # set dispM(y, x) to d
+
+    return dispM
 
 
 """
