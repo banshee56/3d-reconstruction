@@ -2,10 +2,38 @@ import numpy as np
 from submission import eight_point
 import cv2
 
-w = 2
-im1 = np.random.randint(0, 5, (5, 5, 3))
-# print(im1)
-print(im1[-2:2, 1:2, :])       # returns empty array if out of bounds
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Import libraries
+from mpl_toolkits import mplot3d
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+# Creating dataset
+z = np.random.randint(100, size =(50))
+x = np.random.randint(80, size =(50))
+y = np.random.randint(60, size =(50))
+
+print(x.shape)
+# Creating figure
+fig = plt.figure(figsize = (10, 7))
+ax = plt.axes(projection ="3d")
+
+# Creating plot
+ax.scatter3D(x, y, z, color = "green")
+plt.title("simple 3D scatter plot")
+
+# show plot
+plt.show()
+
+
+# w = 2
+# im1 = np.random.randint(0, 5, (5, 5, 3))
+# # print(im1)
+# print(im1[-2:2, 1:2, :])       # returns empty array if out of bounds
 # print(im1)
 # im1_p = np.pad(im1, pad_width=[(w, w),(w, w),(0, 0)], mode='constant')
 # print(im1_p)

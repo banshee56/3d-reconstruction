@@ -65,7 +65,7 @@ def epipolar_correspondences(im1, im2, F, pts1):
     l2 = np.dot(F, pts1_homogenous)                                       # 3xN matrix of corresponding epipolar lines
     pts2 = np.zeros_like(pts1)
 
-    w = 7       # window/patch 'radius', padding width
+    w = 5      # window/patch 'radius', padding width
     im1_p = np.pad(im1, pad_width=[(w, w),(w, w),(0, 0)], mode='constant')
     im2_p = np.pad(im2, pad_width=[(w, w),(w, w),(0, 0)], mode='constant')
 
@@ -100,9 +100,9 @@ def epipolar_correspondences(im1, im2, F, pts1):
             w2 = im2_p[int(cand_point[1]): int(cand_point[1] + 2*w) + 1,    # (2w+1)x(2w+1) window with 3 rgb channels
                     int(cand_point[0]): int(cand_point[0] + 2*w) + 1, :]
             
-            # ignore patches that don't align
-            if w2.shape != w1.shape:
-                continue
+            # # ignore patches that don't align
+            # if w2.shape != w1.shape:
+            #     continue
 
             # compute similarity
             # get the manhattan distance between the points
@@ -145,7 +145,6 @@ Q3.1.4 Triangulation
 """
 def triangulate(P1, pts1, P2, pts2):
     pts3d = np.zeros((pts1.shape[0], 3))
-    # print(pts1.shape)
 
     for p in range(pts1.shape[0]):
         # camera 1 variables
@@ -165,6 +164,7 @@ def triangulate(P1, pts1, P2, pts2):
         # compute A
         A = np.array([y1 * p1_3 - p1_2,
                       p1_1 - x1 * p1_3,
+
                       y2 * p2_3 - p2_2,
                       p2_1 - x2 * p2_3]).reshape((4, 4))
 
@@ -172,9 +172,8 @@ def triangulate(P1, pts1, P2, pts2):
         U, D, Vt = np.linalg.svd(A)
         X = Vt[-1]      # ROW of Vt corresponding to smallest singular value
         X = X/X[-1]
-        pts3d[p] = X[0:3].reshape((1, 3))
+        pts3d[p] = X[0:3]
 
-    # print(pts3d.shape)
     return pts3d
 
 
