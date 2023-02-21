@@ -17,8 +17,11 @@ pts2 = data['pts2']
 # 2. Run eight_point to compute F
 M = max(im1.shape[0], im1.shape[1])
 F = sub.eight_point(pts1, pts2, M)
+print("Fundamental matrix, F:")
+print(F)
 
 ###### to visualize results ######
+# print(F)
 # hlp.displayEpipolarF(im1, im2, F)
 
 # 3. Load points in image 1 from data/temple_coords.npz
@@ -39,6 +42,8 @@ K2 = intrinsics['K2']
 
 # compute essential matrix
 E = sub.essential_matrix(F, K1, K2)
+print("Essential matrix, E:")
+print(E)
 
 # 6. Use camera2 to get 4 camera projection matrices P2
 # compute P using P = K * R * [I|-C]

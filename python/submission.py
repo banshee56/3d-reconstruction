@@ -103,14 +103,8 @@ def epipolar_correspondences(im1, im2, F, pts1):
                     int(cand_point[0]): int(cand_point[0] + 2*w) + 1]
 
             ### compute similarity
-            # SSD loss function, gives flat reconstruction
-            # score = np.sum((w1-w2)**2)
-
-            # euclidean loss function
-            # score = np.linalg.norm(w1-w2)
-
-            # SSD/manhattan loss function 
-            score = np.sum(np.absolute(w1-w2))
+            # Sum of Squared Distances
+            score = np.sum((w1-w2)**2)
 
             # if score is new max
             if score < correspondence_score:
@@ -238,7 +232,8 @@ Q3.2.2 Disparity Map
        [O] dispM, disparity map (H1xW1 matrix)
 """
 # def get_disparity(im1, im2, max_disp, win_size):
-#     disparity_imgs = [0 for i in range(max_disp + 1)]
+#     disparity_imgs = np.empty((im1.shape[0], im1.shape[1], max_disp))
+#     w = int((win_size - 1)/2)
 
 #     # create images shifted by max_disp 
 #     for d in range(max_disp + 1):
@@ -249,12 +244,17 @@ Q3.2.2 Disparity Map
 #         # elements that roll beyond the last position are set to 0
 #         if d != 0:
 #             img[:, -d:] = np.zeros(img[:, -d:].shape)
-        
-#         disparity_imgs[d] = img
 
+#         np.append(disparity_imgs, img)
+
+#     # compute squared error between im1 and im2_shifted
 #     for d in range(len(disparity_imgs)):
 #         im2_shifted = disparity_imgs[d]
 #         error = (im1 - im2_shifted)**2
+
+#         # compute disparity image
+#         mask = np.ones((2*w + 1, 2*w + 1))
+#         error_imgs = sig.convolve2d()
 
 
 def get_disparity(im1, im2, max_disp, win_size):
