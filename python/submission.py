@@ -329,8 +329,23 @@ Q3.3.1 Camera Matrix Estimation
        [O] P, camera matrix (3x4 matrix)
 """
 def estimate_pose(x, X):
-    # replace pass by your implementation
-    pass
+    N = x.shape[0]
+    X_homogenous = np.hstack((X, np.ones((N, 1)))).T    # 4xN
+    
+    # compute A
+    A = np.zeros((2*N, 12))
+    for p in range(N):
+        x0 = x[p, 0]    # heterogenous 2D points
+        y0 = x[p, 1]
+        X0 = X_homogenous[:, p].T
+
+        A[2*p]    =   [X0[0], X0[1], X0[2], X0[3], 0, 0, 0, 0,   -x0*X0[0], -x0*X0[1], -x0*X0[2], -x0*X0[3]]
+        A[2*p+1]  =   [0, 0, 0, 0,   X0[0], X0[1], X0[2], X0[3], -y0*X0[0], -y0*X0[1], -y0*X0[2], -y0*X0[3]]
+
+    # compute SVD of A
+    U, D, Vt = np.linalg.svd(A)
+    P = Vt[-1].reshape(3, 4)
+    return P
 
 
 """
