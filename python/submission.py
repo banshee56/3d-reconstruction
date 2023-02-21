@@ -237,40 +237,51 @@ Q3.2.2 Disparity Map
            win_size, scalar window size value
        [O] dispM, disparity map (H1xW1 matrix)
 """
+# def get_disparity(im1, im2, max_disp, win_size):
+#     disparity_imgs = [0 for i in range(max_disp + 1)]
+
+#     # create images shifted by max_disp 
+#     for d in range(max_disp + 1):
+#         img = im2.copy()
+#         # translate the image by d
+#         img = np.roll(img, -d, axis=1)
+
+#         # elements that roll beyond the last position are set to 0
+#         if d != 0:
+#             img[:, -d:] = np.zeros(img[:, -d:].shape)
+        
+#         disparity_imgs[d] = img
+
+#     for d in range(len(disparity_imgs)):
+#         im2_shifted = disparity_imgs[d]
+#         error = (im1 - im2_shifted)**2
+
+
 def get_disparity(im1, im2, max_disp, win_size):
     # replace pass by your implementation
     dispM = np.zeros_like(im1)
     w = int((win_size - 1)/2)
 
     # pad the images for convolution
-    im1_pad = np.pad(im1, pad_width=[(w, w),(w, w)], mode='constant')
-    im2_pad = np.pad(im2, pad_width=[(w, w),(w, w)], mode='constant')
+    pad = max_disp + w
+    im1_pad = np.pad(im1, pad_width=[(pad, pad),(pad, pad)], mode='constant')
+    im2_pad = np.pad(im2, pad_width=[(pad, pad),(pad, pad)], mode='constant')
 
     mask = np.ones((2*w + 1, 2*w + 1))
-
     for y in range(im1.shape[0]):
         for x in range(im1.shape[1]):
-            minDist = float('inf')
-            minD = 0
-            im1_w = im1[y-w: y+w+1, x-w: x+w+1]                             # create window in im1
-            # im1_w = im1_pad[y-w + w: y+w+1 + w, x-w + w: x+w+1 + w]       # shifted by w due to padding by w
-
+            minDist = float('inf')                                                  # the minimum distance
+            minD = 0                                                                # the disparity at which we get minDist
+            im1_w = im1_pad[y-w + pad: y+w+1 + pad, x-w + pad: x+w+1 + pad]         # shifted by w due to padding by w
 
             # go through d values to find d that produces minimum dist
             for d in range(max_disp + 1):
                 # create window in im2
-                im2_w = im2[y-w: y+w+1, (x-d)-w: (x-d)+w+1]
-                # im2_w = im2_pad[y-w + w: y+w+1 + w, (x-d)-w + w: (x-d)+w+1 + w]
-                
-                # if windows have the same size, compute distance as normal
-                if im1_w.shape == im2_w.shape:
-                    squared_diff = (im1_w - im2_w)**2
-                    # scipy.signal.convolve2d
-                    dist = sig.convolve2d(squared_diff, mask, mode='valid')     # compute the distance
-                # if windows do not have the same size
-                else:
-                    # (x, y) is at the border of the image where image is black
-                    dist = [[0]]
+                im2_w = im2_pad[y-w + pad: y+w+1 + pad, (x-d)-w + pad: (x-d)+w+1 + pad]
+
+                # compute distance
+                squared_diff = (im1_w - im2_w)**2
+                dist = sig.convolve2d(squared_diff, mask, mode='valid')             # convolve to sum
                     
                 # if calculated value is smaller than current niminum distance
                 if dist[0][0] < minDist:

@@ -5,6 +5,7 @@ import submission as sub
 import numpy.linalg as la
 import skimage.color as col
 import matplotlib.pyplot as plt
+from time import time
 
 # 1. Load the images and the parameters
 
@@ -20,8 +21,11 @@ t1p, t2p = rectify['t1p'], rectify['t2p']
 # 2. Get disparity and depth maps
 
 max_disp, win_size = 20, 3
+before = time()
 dispM = sub.get_disparity(I1, I2, max_disp, win_size)
 depthM = sub.get_depth(dispM, K1p, K2p, R1p, R2p, t1p, t2p)
+after = time()
+print("Time taken: " + str(after-before))
 
 # 3. Display disparity and depth maps
 
